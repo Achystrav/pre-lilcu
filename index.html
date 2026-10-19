@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pre Lilcu ❤️</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #030205;
+            overflow: hidden;
+            font-family: "Segoe UI", sans-serif;
+            color: white;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .nadpis {
+            position: fixed;
+            top: 25px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #ff8fc9;
+            font-size: clamp(20px, 4vw, 32px);
+            letter-spacing: 3px;
+            opacity: 0;
+            transition: opacity 2s ease;
+            text-shadow: 0 0 20px #ff168b;
+            pointer-events: none;
+        }
+
+        .nadpis.zobraz {
+            opacity: 1;
+        }
+
+        .podnadpis {
+            position: fixed;
+            bottom: 35px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #ffc6e5;
+            font-size: 15px;
+            letter-spacing: 2px;
+            opacity: 0;
+            transition: opacity 2s ease;
+            pointer-events: none;
+        }
+
+        .podnadpis.zobraz {
+            opacity: 0.85;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="nadpis" id="nadpis">
+        ✨ Špeciálne pre teba ✨
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="podnadpis" id="podnadpis">
+        ❤️ Všetko najlepšie ❤️
+    </div>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const nadpis = document.getElementById("nadpis");
+        const podnadpis = document.getElementById("podnadpis");
+
+        let sirka;
+        let vyska;
+
+        let castice = [];
+        let cieleSrdce = [];
+        let cieleText = [];
+
+        let faza = 0;
+        let casFazy = 0;
+
+        let poslednyCas = 0;
+
+        const POCET_CASTÍC = 1800;
+
+        // Nastavenie velkosti obrazovky
+        function nastavVelkost() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+            sirka = window.innerWidth;
+            vyska = window.innerHeight;
+
+            canvas.width = sirka * dpr;
+            canvas.height = vyska * dpr;
+
+            canvas.style.width = sirka + "px";
+            canvas.style.height = vyska + "px";
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            vytvorCielSrdca();
+            vytvorCielTextu();
+        }
+
+        // Nahodne cislo
+        function nahodne(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        // Vytvorenie cielovych bodov podla tvaru
+        function ziskajBody(sirkaTextu, vyskaTextu, kresli) {
+            const pomocneCanvas = document.createElement("canvas");
+
+            pomocneCanvas.width = sirka;
+            pomocneCanvas.height = vyska;
+
+            const pomocneCtx = pomocneCanvas.getContext("2d");
+
+            kresli(pomocneCtx);
+
+            const data = pomocneCtx.getImageData(
+                0, 0, sirka, vyska
+            ).data;
+
+            const body = [];
+
+            for (let y = 0; y < vyska; y += 4) {
+                for (let x = 0; x < sirka; x += 4) {
+                    const index = (y * sirka + x) * 4;
+
+                    if (data[index + 3] > 100) {
+                        body.push({
+                            x: x + nahodne(-1.5, 1.5),
+                            y: y + nahodne(-1.5, 1.5)
+                        });
+                    }
+                }
+            }
+
+            // Premiesame body, aby sa priradovali nahodne
+            for (let i = body.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+
+                [body[i], body[j]] = [body[j], body[i]];
+            }
+
+            return body;
+        }
+
+        // Tvar srdca
+        function vytvorCielSrdca() {
+            cieleSrdce = ziskajBody(0, 0, function (c) {
+                const velkost = Math.min(sirka * 0.019, vyska * 0.025, 15);
+
+                c.save();
+                c.translate(sirka / 2, vyska / 2);
+                c.scale(velkost, -velkost);
+
+                c.beginPath();
+
+                for (let t = 0; t <= Math.PI * 2; t += 0.01) {
+                    const x = 16 * Math.pow(Math.sin(t), 3);
+
+                    const y =
+                        13 * Math.cos(t)
+                        - 5 * Math.cos(2 * t)
+                        - 2 * Math.cos(3 * t)
+                        - Math.cos(4 * t);
+
+                    if (t === 0) {
+                        c.moveTo(x, y);
+                    } else {
+                        c.lineTo(x, y);
+                    }
+                }
+
+                c.closePath();
+
+                c.lineWidth = 0.7;
+                c.strokeStyle = "white";
+                c.stroke();
+
+                c.restore();
+            });
+        }
+
+        // Ziskanie bodov pre narodeninovy napis
+        function vytvorCielTextu() {
+            cieleText = ziskajBody(0, 0, function (c) {
+                c.textAlign = "center";
+                c.textBaseline = "middle";
+                c.fillStyle = "white";
+
+                if (sirka < 500) {
+                    c.font = "bold 35px Arial";
+                    c.fillText("Všetko najlepšie", sirka / 2, vyska / 2 - 30);
+
+                    c.font = "bold 45px Arial";
+                    c.fillText("Lilca ❤️", sirka / 2, vyska / 2 + 30);
+                } else {
+                    c.font = "bold 54px Arial";
+                    c.fillText("Všetko najlepšie", sirka / 2, vyska / 2 - 35);
+
+                    c.font = "bold 70px Arial";
+                    c.fillText("Lilca ❤️", sirka / 2, vyska / 2 + 40);
+                }
+            });
+        }
+
+        // Vytvorenie jednej castice
+        class Castica {
+            constructor(i) {
+                this.x = nahodne(0, sirka);
+                this.y = nahodne(0, vyska);
+
+                this.povodnaX = this.x;
+                this.povodnaY = this.y;
+
+                this.vx = nahodne(-2, 2);
+                this.vy = nahodne(-2, 2);
+
+                this.velkost = nahodne(0.7, 2.0);
+                this.priehladnost = nahodne(0.3, 1);
+
+                this.farba = nahodne(320, 350);
+                this.faza = nahodne(0, Math.PI * 2);
+
+                this.cielX = this.x;
+                this.cielY = this.y;
+
+                this.index = i;
+            }
+
+            aktualizuj(cas) {
+                if (faza === 0) {
+                    // Volne poletovanie
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    if (this.x < 0 || this.x > sirka) {
+                        this.vx *= -1;
+                    }
+
+                    if (this.y < 0 || this.y > vyska) {
+                        this.vy *= -1;
+                    }
+
+                } else {
+                    let body;
+
+                    if (faza === 1) {
+                        body = cieleSrdce;
+                    } else {
+                        body = cieleText;
+                    }
+
+                    if (body.length > 0) {
+                        const ciel = body[this.index % body.length];
+
+                        const pulz = faza === 1
+                            ? 1 + Math.sin(cas / 350 + this.faza) * 0.018
+                            : 1;
+
+                        const cielX = sirka / 2
+                            + (ciel.x - sirka / 2) * pulz;
+
+                        const cielY = vyska / 2
+                            + (ciel.y - vyska / 2) * pulz;
+
+                        this.x += (cielX - this.x) * 0.055;
+                        this.y += (cielY - this.y) * 0.055;
+
+                        this.x += Math.sin(cas / 500 + this.faza) * 0.12;
+                        this.y += Math.cos(cas / 500 + this.faza) * 0.12;
+                    }
+                }
+            }
+
+            vykresli(cas) {
+                const blik = 0.65 + Math.sin(
+                    cas / 180 + this.faza
+                ) * 0.35;
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    this.x,
+                    this.y,
+                    this.velkost * (0.8 + blik * 0.5),
+                    0,
+                    Math.PI * 2
+                );
+
+                ctx.fillStyle = `hsla(
+                    ${this.farba},
+                    100%,
+                    ${65 + blik * 20}%,
+                    ${this.priehladnost}
+                )`;
+
+                ctx.shadowBlur = 7 + blik * 8;
+                ctx.shadowColor = "#ff168b";
+
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // Inicializacia castic
+        function vytvorCastice() {
+            castice = [];
+
+            for (let i = 0; i < POCET_CASTÍC; i++) {
+                castice.push(new Castica(i));
+            }
+        }
+
+        // Animacny cyklus
+        function animuj(cas) {
+            requestAnimationFrame(animuj);
+
+            const delta = Math.min(cas - (poslednyCas || cas), 40);
+
+            poslednyCas = cas;
+
+            casFazy += delta;
+
+            ctx.clearRect(0, 0, sirka, vyska);
+
+            // Prechody medzi fazami
+            if (faza === 0 && casFazy > 3500) {
+                faza = 1;
+                casFazy = 0;
+            }
+
+            if (faza === 1 && casFazy > 6500) {
+                faza = 2;
+                casFazy = 0;
+            }
+
+            // Zobrazenie horného nadpisu az na konci
+            if (faza === 2 && casFazy > 1800) {
+                nadpis.classList.add("zobraz");
+                podnadpis.classList.add("zobraz");
+            }
+
+            // Castice sa pomaly preskupia
+            for (const castica of castice) {
+                castica.aktualizuj(cas);
+                castica.vykresli(cas);
+            }
+        }
+
+        // Spustenie
+        window.addEventListener("resize", nastavVelkost);
+
+        nastavVelkost();
+        vytvorCastice();
+
+        requestAnimationFrame(animuj);
+    </script>
+
+</body>
+</html>
